@@ -22,7 +22,7 @@ gal_genes = c("YBR018C","YLR081W","YBR019C","YBR020W")
 umean_gal_genes = 2.428821
 #(dn_ds %>% filter(V1 %in% gal_genes) %>% summarise(mean(V4)))
 #svg("figures/S8.svg",width=10, height=6)
-svg("S27.svg")
+svg("figures/S27.svg")
 dn_ds %>% filter(!(V1 %in% gal_genes)) %>% ggplot(aes(x=V4)) +  theme_bw() + geom_histogram() + xlab("Synonymous substitions per site")   + ylab("Count") + 
   theme(axis.title = element_text(size=22), axis.text = element_text(size=22),title =  element_text(size=22)) + geom_vline(xintercept = 2.40,color="red",size=1) 
 dev.off()
