@@ -1,0 +1,7 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+figures/*
+data/*
+balancing_selection_data.tar.gz
