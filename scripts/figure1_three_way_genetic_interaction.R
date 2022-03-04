@@ -34,6 +34,9 @@ colnames(galData$data_3043$geno)
 genotypes = t(c_y_out_unscaled)
 data_3043 = cbind(y, genotypes)
 data_3043 = as.data.frame(data_3043)
+### Get lod scores ### 
+
+#cor(pheno_3004,(c_y_3004))
 ##### #####
 # 0 is CBS for the first SNP.
 # 1 is CBS for the second SNP.
@@ -57,11 +60,20 @@ gal_markers_3004 = gal_info_list$gal_markers_3004
 cor_markers  = !duplicated(c_y_3004,MARGIN=1)
 c_y_subset=c_y_3004[cor_markers,]
 c_y_subset = apply(c_y_subset,1, function(x){scale(x)})
+
 genotype_names = unlist(lapply(strsplit(rownames(c_y_3004),"_"), function(x) { paste(x[1],x[2],x[3],x[4],sep="_")}))
-chrom = unlist(lapply(strsplit(rownames(c_y_subset),"_"), function(x){x[1]}))
-pos = as.numeric(unlist(lapply(strsplit(rownames(c_y_subset),"_"), function(x){x[2]})))
+chrom = unlist(lapply(strsplit(colnames(c_y_subset),"_"), function(x){x[1]}))
+pos = as.numeric(unlist(lapply(strsplit(colnames(c_y_subset),"_"), function(x){x[2]})))
 y = scale(pheno_3004[,grep("Gal",colnames(pheno_3004))])
 r = cor(y,c_y_subset)
+lods = get_lod_from_r(r[1,],n=length(y))
+
+
+mapping_df = data.frame(chrom=chrom,pos=pos,lod=lods)  
+
+mapping_df %>% ggplot(aes(y=lod,x=pos)) +  facet_wrap(~chrom,scales="free_x",nrow=1) + geom_point() + theme_bw() + xlab("Position") + ylab("LOD Score") + theme(text=element_text(size=20),axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + geom_hline(yintercept = 4,color="red")
+
+
 c_y_subset_all = c_y_3004[which(genotype_names %in% gal_markers_3004),]
 chrom = unlist(lapply(strsplit((gal_markers_3004),"_"), function(x){x[1]}))
 pos = as.numeric(unlist(lapply(strsplit((gal_markers_3004),"_"), function(x){x[2]})))
@@ -154,10 +166,10 @@ source("scripts//plate_read_utils.R")
 library(platetools)
 library(segmented)
 # Load the allele replacement experiments. 
-plate = "data/plate_reader/mutants_final_freezer_gal/gal_mutants_gal_feb2019.csv"
-conditions = "data/plate_reader/mutants_final_freezer_gal/gal_mutants_glu_feb2019_conditions.csv"
-samples = "data/plate_reader/mutants_final_freezer_gal/gal_mutants_glu_feb2019_samples.csv"
-mutant_pheno=  "data/plate_reader/mutants_final_freezer_gal/gal_mutant_pheno.csv"
+plate = "data/plate_reader/mutants_final_freezer//gal_mutants_gal_feb2019.csv"
+conditions = "data/plate_reader/mutants_final_freezer/gal_mutants_glu_feb2019_conditions.csv"
+samples = "data/plate_reader/mutants_final_freezer/gal_mutants_glu_feb2019_samples.csv"
+mutant_pheno=  "data/plate_reader/mutants_final_freezer/gal_mutant_pheno.csv"
 galactose_growth = process_phenotype_mutant_plates(plate, conditions, samples, mutant_pheno )
 make_genotype_boxplot(galactose_growth$df_m%>% filter(ID <= 16),variable="doubling")
 parents = galactose_growth$df_m%>% filter(ID <= 16)
@@ -175,7 +187,13 @@ p_3004_no_x = data_3004 %>% ggplot(aes(y=Pheno,x=epistatic)) + theme_bw() + geom
   theme(axis.text = element_text(size=22))  + ggtitle("QTL mapping")+ theme(plot.title = element_text(hjust = 0.5,size=22), axis.title= element_text(size=22)) +   theme(axis.title.x=element_blank(),
                                                                                                                                                                                axis.text.x=element_blank(),
                                                                                                                                                                                axis.ticks.x=element_blank())
-svg("figures/1.svg",width = 16, height = 10)
+p_validation =  parents %>% ggplot(aes(y=doubling,x=epistatic_rename, group=epistatic_rename)) + theme_bw() +   
+  geom_point(size=4,position = position_jitter(width=0.2))+ ylab("Growth (doublings per hour)") + ylim(c(0.2,0.41)) + 
+  xlab("Genotypes at the GAL1/10/7, PGM1, and GAL2 loci") + theme(plot.title = element_text(hjust = 0.5,size=22),axis.text.x = element_text(angle = 90, hjust = 1)) +
+  theme(axis.text = element_text(size=22)) + theme(axis.title= element_text(size=22)) +ggtitle("Allele replacements") +
+  scale_color_manual(values=c("#984ea3","#ff7f00")) + theme(legend.position = c(.9,0.2),legend.background = element_rect(color="white"),legend.box.background = element_rect(size=1,color="black"))
+
+pdf("figures/1.pdf",width = 16, height = 10)
 cowplot::plot_grid(p_3004_no_x + theme(legend.position = "none"),p_validation,labels="AUTO",ncol=1, rel_heights = c(1,1.5), align = "v")
 dev.off()
 

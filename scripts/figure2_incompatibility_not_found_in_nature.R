@@ -17,6 +17,7 @@ chinese_annotations_merged = merge(chinese_annotations1,chinese_annotations2, by
 chinese_annotations_merged$name = substr(chinese_annotations_merged$Genome.Accession,0,4)
 annotation_gal_genes = read.csv("data/annotations/gal_annotations_cbs_complete.csv",stringsAsFactors = F)
 colnames(annotation_gal_genes) = c("Standardized.name","GAL1","GAL10","GAL7","GAL2","PGM1")
+annotations_gal_genes = annotation_gal_genes
 ### Get strain with missing GAL genes.
 ## NPPO has no copies of gal.
 ### Renome IDS.
@@ -56,6 +57,18 @@ group5 = aa_2@phylo$tip.label[actual_groups == "Div4"]
 group6 = aa_2@phylo$tip.label[actual_groups == "Div5"]
 aa_22 = groupOTU(aa_2@phylo,list(group2,group3,group1,group4,group5,group6))
 ## Figure 2a ##
+## For defense.
+
+is_chinese_dataset = aa_2@phylo$tip.label[grepl("N",annotation_gal_genes$Standardized.name)]
+josehp_dataset = aa_2@phylo$tip.label[!grepl("N",annotation_gal_genes$Standardized.name)]
+
+aa_23 = groupOTU(aa_2@phylo, list(is_chinese_dataset,josehp_dataset))
+
+ggtree(aa_23, layout="fan")
+
+ggtree(aa_23,aes(color=group),layout="fan")+ theme(legend.position="right") + scale_color_manual(values=c("#e41a1c","#377eb8"))
+
+
 p = ggtree(aa_22,aes(color=group),layout="fan",open.angle = 180)+scale_color_manual(values = c("#e41a1c","#377eb8","grey85","#f781bf","#984ea3","#ff7f00")) + theme(legend.position="right")
 #### ### 
 ## Figure 2B ##
